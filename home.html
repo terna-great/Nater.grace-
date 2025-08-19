@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Development Hub</title>
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* Navbar */
+  .navbar {
+    height: 100px;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    z-index: 2;
+  }
+  .navbar button {
+    background: #ffcc00;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .profile {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    margin-left: 15px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    height: 120%;
+    width: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to bottom, #006400, #228B22, #32CD32);
+    overflow-x: hidden;
+    transition: 0.4s;
+    padding-top: 20px;
+    z-index: 5;
+    color: #fff;
+  }
+  .sidebar .welcome-msg {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+  }
+  .sidebar a {
+    display: block;
+    padding: 15px 25px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    transition: 0.3s;
+  }
+  .sidebar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .sidebar hr {
+    border-color: rgba(255,255,255,0.3);
+    margin: 10px 0;
+  }
+
+  /* Overlay */
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    transition: 0.4s;
+    z-index: 4;
+  }
+
+  /* Circles */
+  .circle {
+    margin: 50px auto;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 0 40px rgba(255,255,255,0.8);
+    animation: pulse 2s infinite;
+    position: relative;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .welcome-circle {
+    background: radial-gradient(circle at top left, #ffcc00, #ff0066, #6600ff);
+    font-size: 22px;
+  }
+  .contact-circle {
+    background: radial-gradient(circle at top left, #00ffcc, #0066ff, #ff00cc);
+    font-size: 20px;
+    padding: 25px;
+    box-shadow: 0 0 50px rgba(255,255,255,0.6);
+  }
+  .contact-circle h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .contact-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  .contact-buttons a {
+    display: block;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-decoration: none;
+    color: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .contact-buttons a:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+  }
+  .autobiography-btn { background: #ff7f50; }
+  .email-btn { background: #D44638; }
+  .whatsapp-btn { background: #25D366; }
+  .facebook-btn { background: #4267B2; }
+  .tiktok-btn { background: #000000; }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  footer {
+    margin-top: auto;
+    text-align: center;
+    padding: 15px 0;
+    color: #aaa;
+    font-size: 14px;
+    background: #111;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  @media (max-width: 500px) {
+    .circle { width: 300px; height: 300px; }
+    .navbar { font-size: 18px; }
+    .sidebar a { font-size: 16px; }
+    .contact-circle h2 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="navbar">
+    <button onclick="toggleSidebar()">☰ Menu</button>
+    <img id="profilePic" class="profile" src="default-profile.png" alt="Profile">
+  </div>
+
+  <div id="mySidebar" class="sidebar">
+    <div class="welcome-msg">Welcome to Nater's Hub!</div>
+    <a href="free.html">Free Tutorials</a>
+    <a href="premium.html">Premium Tutorials</a>
+    <a href="uploadprofile.html">Upload/Change Profile Pic</a>
+    <hr>
+    <a href="autobiography.html">📖 My Autobiography</a>
+    <a href="mailto:Nmbashau@gmail.com">📧 Email Me</a>
+    <a href="https://wa.me/08160979620" target="_blank">💬 WhatsApp</a>
+    <a href="https://www.facebook.com/Natercode" target="_blank">📘 Facebook</a>
+    <a href="https://www.tiktok.com/@nater.mbashau2" target="_blank">🎵 TikTok</a>
+    <hr>
+    <a href="login.html" onclick="logoutUser()">Logout</a>
+  </div>
+
+  <div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+
+  <div class="circle welcome-circle">Welcome to my Web Development Hub</div>
+
+  <div class="circle contact-circle">
+    <h2>Get in Touch / Follow Me on Social Media</h2>
+    <div class="contact-buttons">
+      <a href="autobiography.html" class="autobiography-btn">📖 My Autobiography</a>
+      <a href="mailto:Nmbashau@gmail.com" class="email-btn">📧 Email</a>
+      <a href="https://wa.me/08160979620" target="_blank" class="whatsapp-btn">💬 WhatsApp</a>
+      <a href="https://www.facebook.com/Natercode" target="_blank" class="facebook-btn">📘 Facebook</a>
+      <a href="https://www.tiktok.com/@nater.mbashau2" target="_blank" class="tiktok-btn">🎵 TikTok</a>
+    </div>
+  </div>
+
+  <footer>© 2025 by Nater</footer>
+
+  <script>
+    // Initialize Backendless
+    Backendless.initApp(
+      "6CCDB29E-0A2A-41D4-994C-5D69186F398E",
+      "B3C2C782-37CB-4123-BB10-4F5E32218668"
+    );
+
+    // Sidebar toggle functions
+    function toggleSidebar() {
+      document.getElementById("mySidebar").style.width = "50%";
+      document.getElementById("overlay").style.width = "100%";
+    }
+
+    function closeSidebar() {
+      document.getElementById("mySidebar").style.width = "0";
+      document.getElementById("overlay").style.width = "0";
+    }
+
+    // Logout function
+    async function logoutUser() {
+      try {
+        await Backendless.UserService.logout();
+        alert("✅ Logged out successfully");
+        window.location.href = "login.html";
+      } catch (error) {
+        alert("⚠️ Logout failed: " + error.message);
+      }
+    }
+
+    // Load user profile picture
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const user = await Backendless.UserService.getCurrentUser();
+        if (user && user.profilePic) {
+          document.getElementById("profilePic").src = user.profilePic;
+        }
+      } catch (err) {
+        console.log("Error fetching profile pic:", err.message);
+      }
+    });
+  </script>
+
+</body>
+</html>

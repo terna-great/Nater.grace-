@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Videos - Web Development Hub</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body {
+    background: #1c15ff;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.notice {
+    font-weight: bold;
+    color: #ffd700;
+    background: #ff0000;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+.video-card {
+    background: #fff;
+    color: #000;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    overflow: hidden;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.video-title {
+    font-weight: bold;
+    padding: 15px;
+    text-align: center;
+}
+
+.video-card video {
+    width: 100%;
+    height: auto;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.fade {
+    opacity: 0.2;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎬 Free Videos 🎞️</h2>
+
+    <div class="notice">
+        ✅ All free videos are accessible to everyone. Enjoy learning!
+    </div>
+
+    <div id="videoList"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.4/axios.min.js"></script>
+<script>
+// Backendless credentials
+const APP_ID = "6CCDB29E-0A2A-41D4-994C-5D69186F398E";
+const API_KEY = "B3C2C782-37CB-4123-BB10-4F5E32218668";
+const BACKEND_URL = `https://api.backendless.com/${APP_ID}/${API_KEY}`;
+
+// Load free videos
+async function loadVideos() {
+    try {
+        const res = await axios.get(`${BACKEND_URL}/data/FreeVideos`);
+        const videos = Array.isArray(res.data) ? res.data : [];
+        const videoList = document.getElementById("videoList");
+        videoList.innerHTML = "";
+        const addedURLs = new Set();
+
+        videos.forEach(videoData => {
+            const titleText = typeof videoData.title === "string" ? videoData.title : "Untitled Video";
+            const urlText = typeof videoData.url === "string" ? videoData.url : "";
+            if(!urlText || addedURLs.has(urlText)) return;
+
+            addedURLs.add(urlText);
+
+            const card = document.createElement("div");
+            card.className = "video-card";
+
+            const title = document.createElement("div");
+            title.className = "video-title";
+            title.textContent = titleText;
+
+            const video = document.createElement("video");
+            video.src = urlText;
+            video.controls = true;
+            video.controlsList = "nodownload";
+            video.oncontextmenu = e => e.preventDefault();
+
+            // Fade other videos when one plays
+            video.addEventListener("play", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => {
+                    if(c !== card) c.classList.add("fade");
+                });
+            });
+            video.addEventListener("pause", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => c.classList.remove("fade"));
+            });
+            video.addEventListener("ended", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => c.classList.remove("fade"));
+            });
+
+            card.appendChild(title);
+            card.appendChild(video);
+            videoList.appendChild(card);
+        });
+    } catch(err){
+        console.error(err);
+        document.getElementById("videoList").innerHTML = "<p class='text-center'>Failed to load videos</p>";
+    }
+}
+
+// Load videos on page load
+loadVideos();
+</script>
+
+</body>
+</html>

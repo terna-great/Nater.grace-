@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Autobiography</title>
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #fff;
+  }
+  h1 {
+    text-align: center;
+    margin: 30px 0 20px;
+    font-size: 32px;
+    text-shadow: 0 0 15px rgba(255,255,255,0.5);
+  }
+  .autobiography-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .media-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255,255,255,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .media-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 40px rgba(255,255,255,0.4);
+  }
+  .media-card img, .media-card video {
+    max-width: 100%;
+    border-radius: 15px;
+    margin-bottom: 10px;
+  }
+  .media-card p {
+    font-size: 16px;
+    color: #fff;
+    text-align: left;
+  }
+  footer {
+    text-align: center;
+    padding: 15px;
+    font-size: 16px;
+    background: rgba(255,255,255,0.05);
+    margin-top: 30px;
+    color: #fff;
+  }
+  @media (max-width: 500px) {
+    .media-card p {
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>My Autobiography</h1>
+
+<div class="autobiography-container" id="mediaContainer">
+  <!-- Autobiography media/cards will display here -->
+</div>
+
+<footer>© 2025 by Nater</footer>
+
+<script>
+const mediaContainer = document.getElementById("mediaContainer");
+
+// Check if Backendless SDK loaded
+if (typeof Backendless !== "undefined") {
+
+  Backendless.initApp(
+    "6CCDB29E-0A2A-41D4-994C-5D69186F398E",
+    "B3C2C782-37CB-4123-BB10-4F5E32218668"
+  );
+
+  // Load autobiography items
+  async function loadMedia(){
+    try {
+      const items = await Backendless.Data.of("Autobiography").find();
+      mediaContainer.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = 'media-card';
+        if(item.mediaURL){
+          if(item.mediaURL.endsWith(".mp4") || item.mediaURL.endsWith(".webm")){
+            card.innerHTML = `<video controls src="${item.mediaURL}"></video>`;
+          } else {
+            card.innerHTML = `<img src="${item.mediaURL}" alt="Media">`;
+          }
+        }
+        if(item.mediaText){
+          card.innerHTML += `<p>${item.mediaText}</p>`;
+        }
+        mediaContainer.appendChild(card);
+      });
+    } catch(err){
+      console.error(err);
+      mediaContainer.innerHTML = '<p style="text-align:center;">No content found.</p>';
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadMedia);
+
+} else {
+  // Offline or SDK not loaded
+  console.warn("Backendless SDK not loaded. Autobiography content cannot be displayed.");
+  mediaContainer.innerHTML = `
+    <p style="text-align:center; color: yellow; margin-top: 20px;">
+      ⚠️ Network unavailable. Autobiography content cannot be loaded.
+    </p>`;
+}
+</script>
+
+</body>
+</html>

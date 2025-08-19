@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Videos Access</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body {
+    background: #1c15ff;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.notice {
+    font-weight: bold;
+    color: #ffd700;
+    background: #ff0000;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+#videoSection { display: none; }
+
+.video-card {
+    background: #fff;
+    color: #000;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    overflow: hidden;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.video-title {
+    font-weight: bold;
+    padding: 15px;
+    text-align: center;
+}
+
+.video-card video {
+    width: 100%;
+    height: auto;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.fade {
+    opacity: 0.2;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>🎬 Premium Videos 🎞️</h2>
+
+<!-- Access Code Section -->
+<div id="accessSection">
+    <div class="notice">
+        ⚠️ To access premium videos, chat with the admin to get your unique access code. Contact: <strong>08160979620</strong> ⚠️
+    </div>
+
+    <div id="codeSection" class="mb-4">
+        <input type="text" id="accessCode" class="form-control mb-2" placeholder="Enter Premium Access Code">
+        <input type="text" id="userIdentifier" class="form-control mb-2" placeholder="Enter Your Name or Email">
+        <button id="verifyBtn" class="btn btn-success w-100">Verify Code</button>
+        <div id="codeError" class="text-danger mt-2"></div>
+    </div>
+</div>
+
+<!-- Video Section -->
+<div id="videoSection">
+    <div id="videoList"></div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.4/axios.min.js"></script>
+<script>
+// Backendless credentials
+const APP_ID = "6CCDB29E-0A2A-41D4-994C-5D69186F398E";
+const API_KEY = "B3C2C782-37CB-4123-BB10-4F5E32218668";
+const BACKEND_URL = `https://api.backendless.com/${APP_ID}/${API_KEY}`;
+
+const accessSection = document.getElementById("accessSection");
+const accessCode = document.getElementById("accessCode");
+const userIdentifier = document.getElementById("userIdentifier");
+const verifyBtn = document.getElementById("verifyBtn");
+const codeError = document.getElementById("codeError");
+const videoSection = document.getElementById("videoSection");
+const videoList = document.getElementById("videoList");
+
+// Check if code is within 3 months
+function isWithinThreeMonths(firstUsed){
+    const firstDate = new Date(firstUsed);
+    const now = new Date();
+    const diff = now - firstDate;
+    const threeMonths = 90 * 24 * 60 * 60 * 1000;
+    return diff <= threeMonths;
+}
+
+// Verify Access Code
+verifyBtn.onclick = async () => {
+    const code = accessCode.value.trim();
+    const user = userIdentifier.value.trim();
+    if(!code || !user){
+        codeError.textContent = "Please enter both code and your name/email";
+        return;
+    }
+
+    try {
+        const res = await axios.get(`${BACKEND_URL}/data/PremiumAccessCodes?where=code='${encodeURIComponent(code)}'`);
+        const codes = Array.isArray(res.data) ? res.data : [];
+
+        if(codes.length === 0){
+            codeError.textContent = "Invalid code";
+            return;
+        }
+
+        const codeData = codes[0];
+
+        if(!codeData.assignedTo){
+            await axios.put(`${BACKEND_URL}/data/PremiumAccessCodes/${codeData.objectId}`, {
+                assignedTo: user,
+                firstUsed: new Date().toISOString()
+            });
+        } else if(codeData.assignedTo !== user){
+            codeError.textContent = "This code is already assigned to another user";
+            return;
+        } else if(!isWithinThreeMonths(codeData.firstUsed)){
+            codeError.textContent = "This code has expired (3 months limit)";
+            return;
+        }
+
+        accessSection.style.display = "none";
+        videoSection.style.display = "block";
+        loadVideos();
+
+    } catch(err){
+        console.error(err);
+        codeError.textContent = "Error verifying code. Try again later.";
+    }
+};
+
+// Load videos from Backendless
+async function loadVideos(){
+    try {
+        const res = await axios.get(`${BACKEND_URL}/data/PremiumVideos`);
+        const videos = Array.isArray(res.data) ? res.data : [];
+
+        videoList.innerHTML = "";
+        const addedURLs = new Set();
+
+        videos.forEach(videoData => {
+            const titleText = typeof videoData.title === "string" ? videoData.title : "Untitled Video";
+            const urlText = typeof videoData.url === "string" ? videoData.url : "";
+            if(!urlText || addedURLs.has(urlText)) return;
+
+            addedURLs.add(urlText);
+
+            const card = document.createElement("div");
+            card.className = "video-card";
+
+            const title = document.createElement("div");
+            title.className = "video-title";
+            title.textContent = titleText;
+
+            const video = document.createElement("video");
+            video.src = urlText;
+            video.controls = true;
+            video.controlsList = "nodownload";
+            video.oncontextmenu = e => e.preventDefault();
+
+            // Fade other videos when this one plays
+            video.addEventListener("play", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => {
+                    if(c !== card) c.classList.add("fade");
+                });
+            });
+            video.addEventListener("pause", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => c.classList.remove("fade"));
+            });
+            video.addEventListener("ended", () => {
+                document.querySelectorAll("#videoList .video-card").forEach(c => c.classList.remove("fade"));
+            });
+
+            card.appendChild(title);
+            card.appendChild(video);
+            videoList.appendChild(card);
+        });
+    } catch(err){
+        console.error(err);
+        videoList.innerHTML = "<p class='text-center'>Failed to load videos</p>";
+    }
+}
+</script>
+</body>
+</html>

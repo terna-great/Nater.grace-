@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login | Web Dev Hub</title>
+
+<!-- Font Awesome 6 -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+<style>
+:root{
+  --accent:#06b6d4;
+  --bg1:#0f172a;
+  --muted:#94a3b8;
+  --input-bg: rgba(255,255,255,0.18);
+  --input-border: rgba(255,255,255,0.6);
+  --input-focus-border: #06b6d4;
+}
+*{box-sizing:border-box;}
+html,body{height:100%; margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+body{
+  color:#e6f0f6;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(270deg,#ff0000,#ffff00,#00ff00);
+  background-size:600% 600%;
+  animation:bgPulse 10s ease infinite;
+  padding:20px;
+}
+@keyframes bgPulse{ 
+  0%{background-position:0% 50%} 
+  50%{background-position:100% 50%} 
+  100%{background-position:0% 50%} 
+}
+.card{
+  width:100%; max-width:420px;
+  background:rgba(255,255,255,0.1);
+  border-radius:22px;
+  padding:36px;
+  box-shadow:0 16px 50px rgba(0,0,0,.5);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border:3px solid rgba(255,255,255,0.35);
+}
+h1{
+  margin:0 0 20px 0;
+  font-size:26px;
+  text-align:center;
+  text-shadow:0 0 12px #000;
+  font-weight:900;
+}
+label{
+  display:block;
+  font-size:20px;
+  color:#fff;
+  margin-top:18px;
+  font-weight:800;
+}
+
+.input-wrapper{ position:relative; margin-top:10px; }
+.input-wrapper .left-icon{
+  position:absolute; top:50%; left:14px; transform:translateY(-50%);
+  font-size:22px; color:#021025; opacity:0.9; pointer-events:none;
+}
+.icon-btn{
+  position:absolute; top:50%; right:14px; transform:translateY(-50%);
+  border:0; background:transparent; padding:0;
+  font-size:22px; cursor:pointer;
+  color:#021025;
+}
+
+.field{
+  width:100%;
+  padding:16px 44px;  /* space for icons */
+  border-radius:14px;
+  border:3px solid var(--input-border);
+  background: var(--input-bg);
+  color:#1c15ff;
+  font-size:22px;
+  font-weight:700;
+  outline:none;
+  transition: all 0.3s ease;
+}
+.field:focus{
+  border-color: var(--input-focus-border);
+  background: rgba(255,255,255,0.28);
+  box-shadow:0 0 14px var(--accent);
+}
+
+.row{ display:flex; gap:12px; margin-top:24px; }
+button.primary{
+  flex:1;
+  padding:16px 18px;
+  border-radius:14px;
+  border:0;
+  font-weight:800;
+  font-size:20px;
+  background:linear-gradient(90deg,var(--accent),#3b82f6);
+  color:#021025;
+  cursor:pointer;
+  transition:0.3s;
+}
+button.primary:hover{
+  filter:brightness(1.2);
+  transform:scale(1.05);
+}
+a.small{
+  align-self:center;
+  color:#0003ff;
+  text-decoration:none;
+  font-size:22px;
+  font-weight:bold;
+}
+.msg{
+  margin-top:18px;
+  font-size:20px;
+  min-height:24px;
+  font-weight:800;
+}
+.error{ color:#ff3400; font-weight:900;font-size:22px; }
+.success{ color:#65ff00; font-weight:900;font-size:22px;}
+.small-note{
+  font-size:16px;
+  color:var(--muted);
+  margin-top:14px;
+  text-align:center;
+  font-weight:600;
+}
+</style>
+</head>
+<body>
+<div class="card" role="main">
+  <h1>Login — Web Dev Hub</h1>
+  <form id="loginForm" autocomplete="on">
+    
+    <label for="email">Email</label>
+    <div class="input-wrapper">
+      <i class="fa-solid fa-envelope left-icon"></i>
+      <input id="email" name="email" type="email" class="field" required />
+    </div>
+
+    <label for="password">Password</label>
+    <div class="input-wrapper">
+      <i class="fa-solid fa-lock left-icon"></i>
+      <input id="password" name="password" type="password" minlength="6" class="field" required />
+      <button type="button" class="icon-btn" id="togglePassword" aria-label="Show password">
+        <i class="fa-solid fa-eye"></i>
+      </button>
+    </div>
+
+    <div class="row">
+      <button class="primary" type="submit" id="loginBtn">Login</button>
+      <a class="small" href="register.html">Register</a>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="small-note">Enter your account details to continue.</div>
+  </form>
+</div>
+
+<script>
+const BACKENDLESS_OPTIONS = {
+  APP_ID: "6CCDB29E-0A2A-41D4-994C-5D69186F398E",
+  API_KEY: "B3C2C782-37CB-4123-BB10-4F5E32218668",
+  API_URL: "https://api.backendless.com"
+};
+
+const SDK_URLS = [
+  "https://cdn.jsdelivr.net/npm/backendless@6.6.5/dist/backendless.min.js",
+  "https://unpkg.com/backendless@6.6.5/dist/backendless.min.js",
+  "https://api.backendless.com/sdk/js/latest/backendless.min.js"
+];
+
+function loadScript(url, timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = url; s.async = true;
+    s.onload = () => resolve(url);
+    s.onerror = () => reject(new Error('Failed to load ' + url));
+    document.head.appendChild(s);
+    if (timeout) setTimeout(() => reject(new Error('Loading timed out: ' + url)), timeout);
+  });
+}
+
+async function loadBackendlessWithFallbacks() {
+  for (let url of SDK_URLS) {
+    try {
+      await loadScript(url, 12000);
+      await new Promise(r => setTimeout(r, 50));
+      if (window.Backendless) return;
+    } catch (err) { console.warn(err); }
+  }
+  throw new Error("Could not load Backendless SDK.");
+}
+
+async function initBackendless() {
+  Backendless.serverURL = BACKENDLESS_OPTIONS.API_URL;
+  Backendless.initApp(BACKENDLESS_OPTIONS.APP_ID, BACKENDLESS_OPTIONS.API_KEY);
+}
+
+async function initPage() {
+  const msgEl = document.getElementById('msg');
+  try {
+    await loadBackendlessWithFallbacks();
+    await initBackendless();
+
+    // Password eye toggle
+    const toggleBtn = document.getElementById('togglePassword');
+    const eyeIcon  = toggleBtn.querySelector('i');
+    const passwordInput = document.getElementById('password');
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      if (isHidden) {
+        eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        toggleBtn.setAttribute('aria-label','Hide password');
+      } else {
+        eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        toggleBtn.setAttribute('aria-label','Show password');
+      }
+    });
+
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      msgEl.textContent = ""; msgEl.className = "msg";
+      const email = document.getElementById('email').value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) { msgEl.textContent = "Please fill email & password."; msgEl.classList.add('error'); return; }
+      try {
+        document.getElementById('loginBtn').disabled = true;
+        await Backendless.UserService.login(email, password, true);
+        msgEl.textContent = "✅ Login successful — redirecting...";
+        msgEl.classList.add('success');
+        setTimeout(() => { window.location.href = "index.html"; }, 1400);
+      } catch (err) {
+        msgEl.textContent = "❌ " + (err && err.message ? err.message : String(err));
+        msgEl.classList.add('error');
+      } finally { document.getElementById('loginBtn').disabled = false; }
+    });
+  } catch (err) {
+    msgEl.textContent = "⚠️ " + (err.message || 'Failed to initialize Backendless.');
+    msgEl.classList.add('error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>
