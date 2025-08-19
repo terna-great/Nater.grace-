@@ -3,11 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Login | Web Dev Hub</title>
+<title>Change / Forgot Password | Web Dev Hub</title>
 
-<!-- Font Awesome 6 -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-
 <style>
 :root{
   --accent:#06b6d4;
@@ -105,7 +103,7 @@ a.small{
   align-self:center;
   color:#0003ff;
   text-decoration:none;
-  font-size:20px;
+  font-size:18px;
   font-weight:bold;
 }
 .msg{
@@ -114,8 +112,8 @@ a.small{
   min-height:24px;
   font-weight:800;
 }
-.error{ color:#ff000a; font-weight:900;font-size:30px; }
-.success{ color:#0003ff; font-weight:900;font-size:30px;}
+.error{ color:#ff000a; font-weight:900;font-size:25px; }
+.success{ color:#5bff15; font-weight:900;font-size:25px;}
 .small-note{
   font-size:16px;
   color:var(--muted);
@@ -131,36 +129,38 @@ a.small{
 </style>
 </head>
 <body>
-<div class="card" role="main">
-  <h1>Login — Web Dev Hub</h1>
-  <form id="loginForm" autocomplete="on">
-    
+<div class="card">
+  <h1>Change / Forgot Password</h1>
+  <form id="passwordForm" autocomplete="on">
+
     <label for="email">Email</label>
     <div class="input-wrapper">
       <i class="fa-solid fa-envelope left-icon"></i>
       <input id="email" name="email" type="email" class="field" required />
     </div>
 
-    <label for="password">Password</label>
+    <label for="oldPassword">Current Password (if logged in)</label>
     <div class="input-wrapper">
       <i class="fa-solid fa-lock left-icon"></i>
-      <input id="password" name="password" type="password" minlength="6" class="field" required />
-      <button type="button" class="icon-btn" id="togglePassword" aria-label="Show password">
+      <input id="oldPassword" name="oldPassword" type="password" class="field" />
+    </div>
+
+    <label for="newPassword">New Password</label>
+    <div class="input-wrapper">
+      <i class="fa-solid fa-lock left-icon"></i>
+      <input id="newPassword" name="newPassword" type="password" class="field" />
+      <button type="button" class="icon-btn" id="toggleNewPassword">
         <i class="fa-solid fa-eye"></i>
       </button>
     </div>
 
     <div class="row">
-      <button class="primary" type="submit" id="loginBtn">Login</button>
-      <a class="small" href="index.html">Register</a>
-    </div>
-
-    <div class="link-row">
-      <a class="small" href="re.html" id="passwordLink">Forgot / Change Password</a>
+      <button class="primary" type="submit">Submit</button>
+      <a class="small" href="login.html">Back to Login</a>
     </div>
 
     <div class="msg" id="msg"></div>
-    <div class="small-note">Enter your account details to continue.</div>
+    <div class="small-note">Use this form to reset password via email or change your password if logged in.</div>
   </form>
 </div>
 
@@ -187,61 +187,49 @@ async function initPage() {
   await loadBackendless();
 
   // Password toggle
-  const toggleBtn = document.getElementById('togglePassword');
+  const toggleBtn = document.getElementById('toggleNewPassword');
   const eyeIcon  = toggleBtn.querySelector('i');
-  const passwordInput = document.getElementById('password');
+  const newPassInput = document.getElementById('newPassword');
   toggleBtn.addEventListener('click', () => {
-    const isHidden = passwordInput.type === 'password';
-    passwordInput.type = isHidden ? 'text' : 'password';
+    const isHidden = newPassInput.type === 'password';
+    newPassInput.type = isHidden ? 'text' : 'password';
     eyeIcon.classList.replace(isHidden ? 'fa-eye' : 'fa-eye-slash', isHidden ? 'fa-eye-slash' : 'fa-eye');
-    toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
   });
 
-  // Login form
-  const form = document.getElementById('loginForm');
+  // Form submit
+  const form = document.getElementById('passwordForm');
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     msgEl.textContent = ""; 
     msgEl.className = "msg";
 
     const email = document.getElementById('email').value.trim();
-    const password = passwordInput.value;
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
 
-    if (!email || !password) {
-      msgEl.textContent = "Please fill email & password."; 
-      msgEl.classList.add('error'); 
+    if (!email) {
+      msgEl.textContent = "Email is required!";
+      msgEl.classList.add('error');
       return;
     }
 
     try {
-      document.getElementById('loginBtn').disabled = true;
+      const currentUser = await Backendless.UserService.getCurrentUser();
 
-      // Login without persistent session to allow multiple logins
-      await Backendless.UserService.login(email, password, false);
-
-      msgEl.textContent = "✅ Login successful — redirecting...";
-      msgEl.classList.add('success');
-      setTimeout(() => { window.location.href = "register.html"; }, 1400);
-
-    } catch (err) {
-      // Force logout previous session if already logged in
-      if (err.message && err.message.includes("already logged in")) {
-        try {
-          await Backendless.UserService.logout();
-          await Backendless.UserService.login(email, password, false);
-          msgEl.textContent = "✅ Login successful — redirecting...";
-          msgEl.classList.add('success');
-          setTimeout(() => { window.location.href = "register.html"; }, 1400);
-        } catch (err2) {
-          msgEl.textContent = "❌ " + (err2.message || String(err2));
-          msgEl.classList.add('error');
-        }
+      if (currentUser && oldPassword && newPassword) {
+        // Logged-in user wants to change password
+        await Backendless.UserService.updatePassword(oldPassword, newPassword);
+        msgEl.textContent = "✅ Password changed successfully!";
+        msgEl.classList.add('success');
       } else {
-        msgEl.textContent = "❌ " + (err.message || String(err));
-        msgEl.classList.add('error');
+        // Not logged-in or missing old password → send reset email
+        await Backendless.UserService.restorePassword(email);
+        msgEl.textContent = "✅ Password reset email sent! Check your inbox.";
+        msgEl.classList.add('success');
       }
-    } finally {
-      document.getElementById('loginBtn').disabled = false;
+    } catch (err) {
+      msgEl.textContent = "❌ " + (err.message || String(err));
+      msgEl.classList.add('error');
     }
   });
 }
